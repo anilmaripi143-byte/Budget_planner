@@ -1370,7 +1370,7 @@ export default function Dashboard() {
                   {isSetupAndroidOpen && (
                     <div className="p-4 bg-white dark:bg-[#1e2326] text-xs text-gray-600 dark:text-gray-300 space-y-2 font-sans border-t border-gray-200 dark:border-gray-700">
                       <p><strong>Step 1:</strong> Install <em>MacroDroid</em> or <em>Tasker</em> from Google Play Store.</p>
-                      <p><strong>Step 2:</strong> Create Trigger: <code>SMS Received</code> -> Filter by Bank IDs (e.g. <code>HDFCBK</code>, <code>ICICIB</code>, <code>SBIIN</code>).</p>
+                      <p><strong>Step 2:</strong> Create Trigger: <code>SMS Received</code> &rarr; Filter by Bank IDs (e.g. <code>HDFCBK</code>, <code>ICICIB</code>, <code>SBIIN</code>).</p>
                       <p><strong>Step 3:</strong> Create Action: <code>HTTP POST Request</code> to <code>{webhookUrl}</code>.</p>
                       <p><strong>Step 4:</strong> Set Headers <code>Content-Type: application/json</code> and JSON Body:</p>
                       <pre className="p-2 rounded bg-gray-100 dark:bg-gray-800 text-[11px] font-mono">
@@ -1398,9 +1398,9 @@ export default function Dashboard() {
 
                   {isSetupIosOpen && (
                     <div className="p-4 bg-white dark:bg-[#1e2326] text-xs text-gray-600 dark:text-gray-300 space-y-2 font-sans border-t border-gray-200 dark:border-gray-700">
-                      <p><strong>Step 1:</strong> Open <em>Shortcuts</em> app -> Navigate to <strong>Automation</strong> tab -> Tap <code>+</code>.</p>
-                      <p><strong>Step 2:</strong> Select <strong>Message</strong> -> Set Sender filter to your Bank name (e.g. <code>HDFC</code>, <code>SBI</code>).</p>
-                      <p><strong>Step 3:</strong> Add Action: <code>Get Contents of URL</code> -> Set Method to <code>POST</code> URL: <code>{webhookUrl}</code>.</p>
+                      <p><strong>Step 1:</strong> Open <em>Shortcuts</em> app &rarr; Navigate to <strong>Automation</strong> tab &rarr; Tap <code>+</code>.</p>
+                      <p><strong>Step 2:</strong> Select <strong>Message</strong> &rarr; Set Sender filter to your Bank name (e.g. <code>HDFC</code>, <code>SBI</code>).</p>
+                      <p><strong>Step 3:</strong> Add Action: <code>Get Contents of URL</code> &rarr; Set Method to <code>POST</code> URL: <code>{webhookUrl}</code>.</p>
                       <p><strong>Step 4:</strong> Add Request Body JSON with <code>key: {webhookKey}</code> and <code>sms_text: Shortcut Input</code>.</p>
                     </div>
                   )}
