@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import WebGLFluidShader from '../components/WebGLFluidShader';
 import { loginUser, registerUser, isValidEmail, getSession, saveSession } from '../lib/auth';
-import { SUPPORTED_CURRENCIES, detectAutoCurrency, fetchGeoIPCurrency } from '../lib/currency';
 import { signInWithFirebaseGoogle, signInWithFirebaseEmail } from '../lib/firebase';
 
 export default function Login({ defaultTab = 'signin' }) {
@@ -23,7 +22,7 @@ export default function Login({ defaultTab = 'signin' }) {
     }
   }, [location.pathname]);
 
-  // Form State - Single unified identifier (Phone or Email)
+  // Form State
   const [identifier, setIdentifier] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -36,20 +35,6 @@ export default function Login({ defaultTab = 'signin' }) {
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [currentTime, setCurrentTime] = useState('9:41');
-
-  // Realtime Mobile Clock
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      setCurrentTime(`${hours % 12 || 12}:${minutes}`);
-    };
-    updateTime();
-    const timer = setInterval(updateTime, 30000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Check active session on mount
   useEffect(() => {
@@ -126,12 +111,12 @@ export default function Login({ defaultTab = 'signin' }) {
 
     const cleanId = identifier.trim();
     if (!cleanId) {
-      triggerErrorShake('Please enter your mobile number or email');
+      triggerErrorShake('Please enter your email or mobile number');
       return;
     }
 
     if (!password) {
-      triggerErrorShake('Please enter your security PIN / password');
+      triggerErrorShake('Please enter your password / security PIN');
       return;
     }
 
@@ -149,7 +134,6 @@ export default function Login({ defaultTab = 'signin' }) {
     setLoading(true);
 
     if (activeTab === 'signin') {
-      // Try Firebase if email
       if (isEmail) {
         try {
           const fbRes = await signInWithFirebaseEmail(cleanId, password);
@@ -173,7 +157,7 @@ export default function Login({ defaultTab = 'signin' }) {
         if (res.success) {
           navigate('/dashboard');
         } else {
-          triggerErrorShake(res.error || 'Invalid credentials. You can also tap "Quick Demo" below.');
+          triggerErrorShake(res.error || 'Invalid credentials. You can also tap "Instant Demo Login" below.');
         }
       }, 500);
     } else {
@@ -214,10 +198,9 @@ export default function Login({ defaultTab = 'signin' }) {
         return;
       }
     } catch (err) {
-      console.warn("Firebase Google Auth fallback:", err);
+      console.warn("Google Auth fallback:", err);
     }
 
-    // Demo fallback
     setTimeout(() => {
       const demoEmail = `google_user_${Date.now().toString().slice(-4)}@smartbudget.in`;
       const result = activeTab === 'signin'
@@ -233,123 +216,129 @@ export default function Login({ defaultTab = 'signin' }) {
     }, 400);
   };
 
-  // Detect whether current input looks like numbers or text
   const isNumericOnly = /^\d+$/.test(identifier.replace(/[\s-]/g, ''));
 
   return (
-    <div className="min-h-screen w-full bg-[#0d1317] flex flex-col items-center justify-center p-0 sm:p-4 selection:bg-[#00685f] selection:text-white font-sans relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#f8fafc] dark:bg-[#0f172a] text-slate-900 dark:text-white flex flex-col justify-between selection:bg-[#00685f] selection:text-white font-sans relative overflow-x-hidden">
       
-      {/* Background Fluid Shader for ambient background */}
+      {/* Background Fluid Shader */}
       <WebGLFluidShader />
 
-      {/* --- MOBILE CONTAINER (Clean, uncluttered, 390px-412px phone dimensions) --- */}
-      <main
-        className={`w-full max-w-[412px] min-h-screen sm:min-h-[810px] sm:max-h-[860px] bg-white dark:bg-[#121619] sm:rounded-[44px] shadow-2xl sm:border-[8px] sm:border-slate-800 dark:sm:border-slate-700 flex flex-col justify-between relative z-10 overflow-x-hidden overflow-y-auto ${
-          shake ? 'animate-shake' : ''
-        }`}
-      >
-        {/* NATIVE MOBILE STATUS BAR */}
-        <div className="w-full pt-3 px-6 pb-1 flex items-center justify-between text-xs font-semibold text-[#191c1e] dark:text-white shrink-0 select-none">
-          <span className="font-mono text-[13px] tracking-tight font-bold">{currentTime}</span>
+      {/* Ambient background glow orbs */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden flex items-center justify-center">
+        <div className="absolute top-[15%] left-[20%] w-[450px] h-[450px] rounded-full bg-teal-500/10 dark:bg-teal-500/15 blur-[140px]"></div>
+        <div className="absolute bottom-[15%] right-[20%] w-[400px] h-[400px] rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 blur-[140px]"></div>
+      </div>
 
-          {/* Dynamic Island / Notch */}
-          <div className="w-24 h-4.5 bg-black dark:bg-black/80 rounded-full flex items-center justify-end pr-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#00685f]/80 animate-pulse"></span>
+      {/* TOP WEBSITE NAVBAR */}
+      <header className="w-full relative z-20 px-6 sm:px-12 py-5 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md">
+        {/* Logo & Brand */}
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00685f] to-[#004e47] text-white flex items-center justify-center font-black text-xl shadow-md shadow-[#00685f]/20">
+            ₹
           </div>
-
-          {/* Network & Battery */}
-          <div className="flex items-center gap-1.5 text-[14px]">
-            <span className="material-symbols-outlined text-[15px]">signal_cellular_alt</span>
-            <span className="font-mono text-[11px] font-bold">5G</span>
-            <span className="material-symbols-outlined text-[15px]">wifi</span>
-            <span className="material-symbols-outlined text-[16px] text-[#00685f] dark:text-[#6ffbbe]">battery_full</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white">
+                Smart Budget
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 font-bold text-[0.65rem] tracking-wider uppercase">
+                PRO 2.0
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 -mt-0.5 font-medium">Daily Spending & Wealth Architecture</p>
           </div>
         </div>
 
-        {/* MINIMAL APP HEADER */}
-        <header className="px-6 pt-2 pb-2 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#00685f] text-white flex items-center justify-center font-extrabold text-base shadow-sm">
-              ₹
-            </div>
-            <div>
-              <span className="font-extrabold text-base tracking-tight text-[#191c1e] dark:text-white">Smart Budget</span>
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-[#89f5e7] text-[#00201d] font-bold text-[0.55rem] uppercase">PRO</span>
-            </div>
-          </div>
+        {/* Right Controls */}
+        <div className="flex items-center gap-3">
+          {/* Quick Demo Button in Navbar */}
+          <button
+            type="button"
+            onClick={handleQuickDemoLogin}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[#00685f] dark:text-[#6bd8cb] text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-all cursor-pointer"
+          >
+            <span>⚡</span>
+            <span>Instant Demo (₹1 Lakh/mo)</span>
+          </button>
 
+          {/* Dark Mode Toggle */}
           <button
             type="button"
             onClick={toggleDarkMode}
             aria-label="Toggle dark mode"
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[17px]">
+            <span className="material-symbols-outlined text-[19px]">
               {darkMode ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
-        </header>
+        </div>
+      </header>
 
-        {/* MAIN BODY */}
-        <div className="flex-1 px-6 flex flex-col justify-center py-2">
-          
-          {/* Clean Greeting */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-black text-[#191c1e] dark:text-white tracking-tight">
-              {activeTab === 'signin' ? 'Welcome back.' : 'Create your account.'}
+      {/* MAIN WEBSITE CENTERED AUTH CONTAINER */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+        <div
+          className={`w-full max-w-[460px] bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 transition-transform duration-200 ${
+            shake ? 'animate-shake' : ''
+          }`}
+        >
+          {/* Card Header */}
+          <div className="mb-6 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {activeTab === 'signin' ? 'Welcome back' : 'Create your vault'}
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
               {activeTab === 'signin'
-                ? 'Sign in to monitor your daily allowance and UPI expenses.'
-                : 'Automate your monthly budget into a clear daily spending target.'}
+                ? 'Sign in to access your daily allowance and automated UPI tracking.'
+                : 'Turn your monthly salary into an easy, stress-free daily budget.'}
             </p>
           </div>
 
-          {/* STREAMLINED AUTH FORM */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* Full Name (Sign Up only) */}
+            {/* Full Name for Registration */}
             {activeTab === 'new_account' && (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
                   Full Name
                 </label>
                 <div className="relative flex items-center">
-                  <span className="material-symbols-outlined absolute left-3.5 text-gray-400 text-[18px] pointer-events-none">
+                  <span className="material-symbols-outlined absolute left-3.5 text-slate-400 text-[19px] pointer-events-none">
                     person
                   </span>
                   <input
-                    id="mobile-name"
+                    id="web-name"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Rahul Sharma"
-                    className="w-full h-12 pl-10 pr-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-[#191c1e] dark:text-white text-sm outline-none focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-gray-400"
+                    className="w-full h-12 pl-10 pr-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-slate-400"
                   />
                 </div>
               </div>
             )}
 
-            {/* Smart Unified Identifier (Mobile Number or Email) */}
+            {/* Email or Mobile Number */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
-                Mobile Number or Email
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                Email or Mobile Number
               </label>
               <div className="relative flex items-center">
-                {/* Prefix badge only if user types numeric phone */}
                 {isNumericOnly && identifier.length > 0 ? (
-                  <div className="absolute left-3 flex items-center gap-1 pr-2 border-r border-gray-300 dark:border-gray-700 pointer-events-none">
-                    <span className="text-xs">🇮🇳</span>
-                    <span className="font-bold text-xs text-gray-700 dark:text-gray-300 font-mono">+91</span>
+                  <div className="absolute left-3.5 flex items-center gap-1.5 pr-2.5 border-r border-slate-300 dark:border-slate-700 pointer-events-none">
+                    <span className="text-sm">🇮🇳</span>
+                    <span className="font-bold text-xs text-slate-700 dark:text-slate-300 font-mono">+91</span>
                   </div>
                 ) : (
-                  <span className="material-symbols-outlined absolute left-3.5 text-gray-400 text-[18px] pointer-events-none">
-                    {identifier.includes('@') ? 'mail' : 'smartphone'}
+                  <span className="material-symbols-outlined absolute left-3.5 text-slate-400 text-[19px] pointer-events-none">
+                    {identifier.includes('@') ? 'mail' : 'person'}
                   </span>
                 )}
                 <input
-                  id="mobile-identifier"
+                  id="web-identifier"
                   type="text"
                   required
                   value={identifier}
@@ -357,18 +346,18 @@ export default function Login({ defaultTab = 'signin' }) {
                     setIdentifier(e.target.value);
                     if (error) setError('');
                   }}
-                  placeholder="Mobile number or email"
-                  className={`w-full h-12 pr-4 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-[#191c1e] dark:text-white text-sm outline-none focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-gray-400 ${
-                    isNumericOnly && identifier.length > 0 ? 'pl-19 font-mono' : 'pl-10'
+                  placeholder="name@domain.com or 10-digit mobile"
+                  className={`w-full h-12 pr-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-slate-400 ${
+                    isNumericOnly && identifier.length > 0 ? 'pl-20 font-mono' : 'pl-10'
                   }`}
                 />
               </div>
             </div>
 
-            {/* Password / MPIN */}
+            {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   Password / PIN
                 </label>
                 {activeTab === 'signin' && (
@@ -376,20 +365,20 @@ export default function Login({ defaultTab = 'signin' }) {
                     href="#forgot"
                     onClick={(e) => {
                       e.preventDefault();
-                      alert('Password reset link sent to your registered contact.');
+                      alert('Password reset instructions sent to your registered contact.');
                     }}
-                    className="text-[11px] text-[#00685f] dark:text-[#6bd8cb] font-bold hover:underline"
+                    className="text-xs text-[#00685f] dark:text-[#6bd8cb] font-bold hover:underline"
                   >
-                    Forgot PIN?
+                    Forgot password?
                   </a>
                 )}
               </div>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-3.5 text-gray-400 text-[18px] pointer-events-none">
+                <span className="material-symbols-outlined absolute left-3.5 text-slate-400 text-[19px] pointer-events-none">
                   lock
                 </span>
                 <input
-                  id="mobile-password"
+                  id="web-password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
@@ -398,33 +387,33 @@ export default function Login({ defaultTab = 'signin' }) {
                     if (error) setError('');
                   }}
                   placeholder="••••••••••••"
-                  className="w-full h-12 pl-10 pr-11 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-[#191c1e] dark:text-white font-mono text-sm outline-none focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-gray-400"
+                  className="w-full h-12 pl-10 pr-11 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-[#00685f] focus:ring-2 focus:ring-[#00685f]/20 transition-all placeholder:text-slate-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 cursor-pointer"
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
+                  <span className="material-symbols-outlined text-[19px]">
                     {showPassword ? 'visibility_off' : 'visibility'}
                   </span>
                 </button>
               </div>
             </div>
 
-            {/* Inline Error Message */}
+            {/* Error Message */}
             {error && (
-              <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                <span className="material-symbols-outlined text-[17px] shrink-0">error</span>
                 <span>{error}</span>
               </div>
             )}
 
-            {/* SINGLE PRIMARY CTA BUTTON */}
+            {/* Primary Action Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-2xl bg-[#00685f] hover:bg-[#005049] text-white font-bold text-sm shadow-md shadow-[#00685f]/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+              className="w-full h-12 rounded-xl bg-[#00685f] hover:bg-[#005049] text-white font-bold text-sm shadow-md shadow-[#00685f]/20 hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               {loading ? (
                 <>
@@ -438,25 +427,25 @@ export default function Login({ defaultTab = 'signin' }) {
                 </>
               ) : (
                 <>
-                  <span>{activeTab === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                  <span>{activeTab === 'signin' ? 'Sign In to Vault' : 'Create Free Account'}</span>
                   <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </>
               )}
             </button>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center my-3">
-              <div className="w-full h-px bg-gray-200 dark:bg-gray-800"></div>
-              <span className="absolute bg-white dark:bg-[#121619] px-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <div className="relative flex items-center justify-center my-4">
+              <div className="w-full h-px bg-slate-200 dark:bg-slate-800"></div>
+              <span className="absolute bg-white dark:bg-slate-900 px-3 text-xs font-bold uppercase tracking-widest text-slate-400">
                 Or
               </span>
             </div>
 
-            {/* SINGLE CLEAN GOOGLE SSO BUTTON */}
+            {/* Clean Google SSO Button */}
             <button
               type="button"
               onClick={handleGoogleAuth}
-              className="w-full h-11 px-4 rounded-2xl bg-gray-50 dark:bg-gray-800/70 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-[#191c1e] dark:text-white flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] cursor-pointer"
+              className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
@@ -469,46 +458,46 @@ export default function Login({ defaultTab = 'signin' }) {
 
           </form>
 
-          {/* Toggle between Sign In and Sign Up (Replaces bulky segmented tabs) */}
-          <div className="mt-5 text-center">
+          {/* Toggle Sign In / Sign Up */}
+          <div className="mt-6 text-center">
             <button
               type="button"
               onClick={toggleTab}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
+              className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
             >
               {activeTab === 'signin' ? (
-                <span>Don't have an account? <strong className="text-[#00685f] dark:text-[#6bd8cb]">Create one</strong></span>
+                <span>Don't have an account? <strong className="text-[#00685f] dark:text-[#6bd8cb] hover:underline font-bold">Create one</strong></span>
               ) : (
-                <span>Already have an account? <strong className="text-[#00685f] dark:text-[#6bd8cb]">Sign In</strong></span>
+                <span>Already have an account? <strong className="text-[#00685f] dark:text-[#6bd8cb] hover:underline font-bold">Sign In</strong></span>
               )}
             </button>
           </div>
 
-          {/* Subtle Quick Demo Link (No clumsy giant button) */}
-          <div className="mt-3 text-center">
+          {/* 1-Tap Demo Link */}
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
             <button
               type="button"
               onClick={handleQuickDemoLogin}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/40 text-[#00685f] dark:text-[#6bd8cb] text-[11px] font-bold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/40 text-[#00685f] dark:text-[#6bd8cb] text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors cursor-pointer"
             >
               <span>⚡</span>
-              <span>Try 1-tap demo (₹1 Lakh/mo profile)</span>
+              <span>Try 1-tap demo (₹1 Lakh/mo salary profile)</span>
             </button>
           </div>
 
         </div>
-
-        {/* MINIMAL FOOTER */}
-        <footer className="px-6 pb-4 pt-1 text-center shrink-0">
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-400 font-medium">
-            <span className="material-symbols-outlined text-[13px] text-[#00685f] dark:text-[#6bd8cb]">lock</span>
-            <span>256-bit bank encryption • RBI AA compliant</span>
-          </div>
-          {/* Home swipe bar */}
-          <div className="w-28 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-2.5"></div>
-        </footer>
-
       </main>
+
+      {/* WEBSITE FOOTER */}
+      <footer className="w-full relative z-20 px-6 py-4 border-t border-slate-200/60 dark:border-slate-800/60 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 max-w-6xl mx-auto">
+        <div>
+          © 2026 Smart Budget Planner. All rights reserved.
+        </div>
+        <div className="flex items-center gap-2 font-medium">
+          <span className="material-symbols-outlined text-[15px] text-[#00685f] dark:text-[#6bd8cb]">verified_user</span>
+          <span>Bank-Grade 256-Bit AES Encryption • RBI Account Aggregator</span>
+        </div>
+      </footer>
 
     </div>
   );
