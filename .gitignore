@@ -27,3 +27,15 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Python & SQLite
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+*.db
+.venv/
+venv/
+ENV/
+
